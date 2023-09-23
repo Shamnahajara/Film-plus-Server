@@ -4,7 +4,8 @@ const userController = require('../controller/userController/user_main_Controlle
 const productController = require('../controller/userController/rent_product_controller');
 const paymentController = require('../controller/userController/rent_payment_controller');
 const movieController = require('../controller/userController/movie_controller');
-const communityController = require('../controller/userController/community_controller')
+const communityController = require('../controller/userController/community_controller');
+const providerController = require('../controller/userController/provider_chat');
 const auth = require('../middleware/auth');
 
 router.post('/register',userController.register);
@@ -39,14 +40,17 @@ router.get('/getmovies',movieController.getMovies);
 router.get('/providerlist/:providerId',auth.verifyUserToken,productController.productOnRental);
 router.patch('/returned/:rentalId',auth.verifyUserToken,productController.returned);
 router.post('/rentonduemail',auth.verifyUserToken,productController.rentReturnMail);
-router.get('/allusers/:userId',auth.verifyUserToken,communityController.allUsers);
+router.get('/userInfo/:userId',auth.verifyUserToken,communityController.userInfo);
+router.get('/allusers/:userId',auth.verifyUserToken,communityController.allUsers)
 router.post('/oneOnOne/:userId',auth.verifyUserToken,communityController.accessChat);
 router.get('/fetchChats/:userId',auth.verifyUserToken,communityController.fetchChats);
 router.post('/addcommunity/:userId',auth.verifyUserToken,communityController.createCommunity);
 router.patch('/editcommunity',auth.verifyUserToken,communityController.editCommunity);
 router.patch('/addtogroup',auth.verifyUserToken,communityController.addToCommunity);
 router.patch('/removefromcommunity',auth.verifyUserToken,communityController.removeFromCommunity);
-
-
+router.get('/providerInfo/:providerId',auth.verifyUserToken,providerController.providerInfo);
+router.get('/providerChat/:providerId',auth.verifyUserToken,providerController.accessChat);
+router.get('/chatslist/:userId',auth.verifyUserToken,providerController.fetchChats);
+router.post('/addmessage',auth.verifyUserToken,providerController.addMessage);
 
 module.exports = router

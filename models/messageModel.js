@@ -10,6 +10,10 @@ const messageSchema = mongoose.Schema({
         type:String,
         trim:true
     },
+    providerChat:{
+        type:mongoose.Schema.Types.ObjectId,
+        ref:"ChatProvider"
+    },
     chat: {
         type:mongoose.Schema.Types.ObjectId,
         ref:"Chat"

@@ -7,8 +7,7 @@ const userInfo = async (req,res)=>{
   try{
     const {userId} = req.params
     const user = await userModel.findOne({_id:userId})
-    res.status(200).json(user);
-
+    res.status(200).json({user:user});
   }catch (err){
     console.error(userInfo)
   }
@@ -17,17 +16,17 @@ const userInfo = async (req,res)=>{
 const allUsers = async (req, res) => {
   try {
     const { userId } = req.params;
-    const keyword = req.body.keyword
-      ? {
-          $or: [
-            { name: { $regex: req.body.keyword, $options: "i" } },
-            { email: { $regex: req.body.keyword, $options: "i" } },
-          ],
-        }
-      : {};
+    // const keyword = req.body.keyword
+    //   ? {
+    //       $or: [
+    //         { name: { $regex: req.body.keyword, $options: "i" } },
+    //         { email: { $regex: req.body.keyword, $options: "i" } },
+    //       ],
+    //     }
+    //   : {};
 
-    const users = await userModel.find(keyword).find({ _id: { $ne: userId } });
-    res.status(200).json(users);
+    const allUsers = await userModel.find({ _id: { $ne: userId } });
+    return res.status(200).json({allUsers:allUsers});
   } catch (err) {
     console.error("allUsers : ", err);
   }
@@ -44,11 +43,11 @@ const accessChat = async (req, res) => {
         .json({ errmsg: "userId param not sent with request" });
     }
 
-    const isChat = await ChatModel.find({
+    let isChat = await ChatModel.find({
       isGroupChat: false,
       $and: [
         { users: { $elemMatch: { $eq: userId } } },
-        { uses: { $elemMatch: { $eq: reciever } } },
+        { users: { $elemMatch: { $eq: reciever } } },
       ],
     })
       .populate("users", "-password")
@@ -93,7 +92,7 @@ const fetchChats = async (req, res) => {
           path: "latestMessage.sender",
           select: "name profileImage email",
         });
-        re.status(200).json(results);
+        res.status(200).json(results);
       });
   } catch (err) {
     console.error("fetchChats", err);
@@ -204,6 +203,7 @@ const removeFromCommunity = async (req,res)=>{
 
 
 module.exports = {
+  userInfo,
   allUsers,
   accessChat,
   fetchChats,

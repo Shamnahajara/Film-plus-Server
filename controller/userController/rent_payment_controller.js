@@ -2,7 +2,6 @@ const RentModel = require('../../models/rentModel');
 const ProductModel =require('../../models/productModel');
 const Stripe = require('stripe')
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY
-console.log('here',STRIPE_API_KEY)
 const stripe = Stripe(STRIPE_API_KEY);
 const FRONTEND_URL = process.env.FRONTEND_URL
 const BACKEND_URL = process.env.BACKEND_URL
@@ -10,7 +9,6 @@ const BACKEND_URL = process.env.BACKEND_URL
 // ................................CHECKOUT-AND-PAYMENT...................................
 const createCheckoute = async (req, res) => {
   try {
-    console.log('here i am')
     const UserId = req.body.userId
     const fromDate = req.body.rentFrom
     const toDate = req.body.rentTo
@@ -88,7 +86,6 @@ if (existingBooking) {
 const paymentSuccess = async (req, res) => {
     try {
         const { productId, fromDate, toDate, amount, userId,location } = req.query
-        console.log(req.query+"entheeelum")
         const load = true
         await RentModel.create({
             userId: userId,

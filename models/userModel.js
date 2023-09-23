@@ -30,7 +30,14 @@ const userSchema = mongoose.Schema({
     movieId:[ {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Movies",
-      }]
+      }],
+    bioDescription: {
+        type: String,
+    },
+    likedGenres: [{
+        type: String
+    }],
+
 },
 {
     timestamps:true
