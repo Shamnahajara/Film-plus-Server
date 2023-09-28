@@ -15,12 +15,11 @@ const providerInfo = async (req, res) => {
 const fetchChats = async (req, res) => {
   try {
     const { userId } = req.params;
-    const results =  await ProviderChatModel.find({ users: { $elemMatch: { $eq: userId } } })
+    const results = await ProviderChatModel.find({ users: { $elemMatch: { $eq: userId } } })
       .populate("users", "-password")
       .sort({ updatedAt: -1 })
-      console.log( "results",results)
-       res.status(200).json({results:results});
-      
+    res.status(200).json({ results: results });
+
   } catch (err) {
     console.error("fetchChats", err);
   }
@@ -42,10 +41,12 @@ const accessChat = async (req, res) => {
     });
 
     if (existingChat) {
+      const otherUserId = existingChat.users.find(user => user.toString() !== userId);
+      const otherUser = await userModel.findById(otherUserId);
       const messages = await MessageModel.find({
         providerChat: existingChat._id,
       });
-      return res.status(200).json({ messages, chatId: existingChat._id });
+      return res.status(200).json({ messages, chatId: existingChat._id, otherUser });
     }
 
     const chatData = {
@@ -69,12 +70,12 @@ const addMessage = async (req, res) => {
   try {
     const { userId, message, chatId } = req.body;
     const newMessage = await MessageModel.create({
-      sender : userId,
+      sender: userId,
       message,
-      providerChat : chatId
+      providerChat: chatId
     });
     if (newMessage) {
-      res.status(200).json({ message: "message " });
+      res.status(200).json({ msg: newMessage, message: "message " });
     } else {
       res.status(403).json({ errmsg: "not ready" });
     }

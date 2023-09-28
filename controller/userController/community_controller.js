@@ -1,17 +1,189 @@
-const chatModel = require("../../models/chatModel");
-const ChatModel = require("../../models/chatModel");
+const communityChatModel = require('../../models/communityChatModel')
 const userModel = require("../../models/userModel");
+const MessageModel = require('../../models/messageModel')
+
+
+// ......................................UPDATING USER-INFO FOR GIVING SUGGESION ............................................
+const updateUserinfo = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { interestsData } = req.body
+
+    const user = await userModel.findByIdAndUpdate(userId, {
+      favoriteGenre: interestsData.favoriteGenre,
+      workingAs: interestsData.workingAs,
+      preferredLanguage: interestsData.preferredLanguage,
+      communitymember: true
+    }, { new: true });
+
+    if (user) {
+      return res.status(200).json({ message: 'Success' });
+    } else {
+      return res.status(403).json({ message: 'Failed to update user data' });
+    }
+
+  } catch (err) {
+    console.error("updateuserInfo", err)
+  }
+}
+
 
 // ...............................................USER-INFO...........................................................................
-const userInfo = async (req,res)=>{
-  try{
-    const {userId} = req.params
-    const user = await userModel.findOne({_id:userId})
-    res.status(200).json({user:user});
-  }catch (err){
+const userInfo = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const user = await userModel.findOne({ _id: userId }, { password: 0 })
+    res.status(200).json({ user: user });
+  } catch (err) {
     console.error(userInfo)
   }
 }
+
+// ...................................SUGGEST USERS ACCORDING TO USER TASTE .............................................................//
+const connectMembers = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const sessionUser = await userModel.findById(userId);
+
+    const communityChats = await communityChatModel.find({ users: { $elemMatch: { $ne: userId } } })
+
+    const userIDsInCommunityChats = communityChats.reduce((userIDs, chat) => {
+      return userIDs.concat(chat.users);
+    }, []);
+
+    const uniqueUserIDsInCommunityChats = [...new Set(userIDsInCommunityChats)];
+
+    const similarUsers = await userModel.find({
+      _id: { $ne: userId },
+      $and: [
+        {
+          $or: [
+            { favoriteGenre: sessionUser.favoriteGenre },
+            { workingAs: sessionUser.workingAs },
+            { preferredLanguage: sessionUser.preferredLanguage }
+          ]
+        },
+        { _id: { $nin: uniqueUserIDsInCommunityChats } }
+      ]
+
+    });
+
+    res.status(200).json({ similarUsers: similarUsers });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+//.........................................CREAT-CHAT-WITH-SUGGESTED-USER..............................................
+const createChat = async (req, res) => {
+  try {
+    const userId = req.payload.id
+    const { recieverId } = req.params
+
+    const chat = await communityChatModel.create({
+      isGroupChat: false,
+      users: [userId, recieverId],
+      requested: {
+        requestId: userId,
+        accepted: false,
+      },
+    });
+  } catch (err) {
+    console.error("createChat", err)
+  }
+}
+
+// ...........................................ACCEPTING -CHAT-REQUEST.............................................................
+const acceptReq = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+
+    const accept = await communityChatModel.findByIdAndUpdate(
+      chatId,
+      {
+        $set: { 'requested.accepted': true },
+      },
+      { new: true }
+    );
+
+    if (accept) {
+      res.status(200).json({ message: "You accepted the incoming request" });
+    } else {
+      res.status(404).json({ message: "No matching document found" });
+    }
+  } catch (err) {
+    console.error("acceptreq", err);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+
+
+
+
+//........................................ACCESS-SESSION USER CHAT LISTS........................................................................
+const chatList = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const results = await communityChatModel.find({ users: { $elemMatch: { $eq: userId } } })
+      .populate("users", "-password")
+      .sort({ updatedAt: -1 })
+    res.status(200).json({ results: results });
+
+  } catch (err) {
+    console.error("fetchChats", err);
+  }
+};
+
+// ..................................ACCESSING MESSAGES OF A SINGLE-CHAT................................................
+const accessMessage = async (req, res) => {
+  try {
+    const userId = req.payload.id
+    const { recieverId } = req.params
+
+    const reciever = await userModel.findById(recieverId)
+    const existingChat = await communityChatModel.findOne({
+      users: { $all: [userId, recieverId] },
+    });
+
+    if (existingChat) {
+      const messages = await MessageModel.find({
+        communityChat: existingChat._id,
+      });
+      console.log(messages)
+      return res.status(200).json({ messages, reciever, chatId: existingChat });
+    }
+
+  } catch (err) {
+    console.error('accessmessage', err)
+  }
+}
+
+// ..........................................ADD-MESSAGE-ONE-TO-ONE.........................................................................
+const addMessage = async (req, res) => {
+  try {
+    const { userId, message, chatId } = req.body;
+    const newMessage = await MessageModel.create({
+      sender: userId,
+      message,
+      communityChat: chatId
+    });
+    console.log(newMessage)
+    if (newMessage) {
+      res.status(200).json({ msg: newMessage, message: "message " });
+    } else {
+      res.status(403).json({ errmsg: "not ready" });
+    }
+  } catch (err) {
+    console.error(err);
+  }
+};
+
+
+
+
 // ..................................LISTING ALL USERS IN CHAT ACCORDING USER SEARCH.....................................
 const allUsers = async (req, res) => {
   try {
@@ -26,13 +198,19 @@ const allUsers = async (req, res) => {
     //   : {};
 
     const allUsers = await userModel.find({ _id: { $ne: userId } });
-    return res.status(200).json({allUsers:allUsers});
+    return res.status(200).json({ allUsers: allUsers });
   } catch (err) {
     console.error("allUsers : ", err);
   }
 };
 
-// ..........................................ACCESS-CHAT-OF-ONE-TO-ONE.............................................................
+
+
+
+
+
+
+// ..........................................ACCESS-Messages-OF-ONE-TO-ONE.............................................................
 const accessChat = async (req, res) => {
   try {
     const { userId } = req.params;
@@ -43,7 +221,7 @@ const accessChat = async (req, res) => {
         .json({ errmsg: "userId param not sent with request" });
     }
 
-    let isChat = await ChatModel.find({
+    let isChat = await co.find({
       isGroupChat: false,
       $and: [
         { users: { $elemMatch: { $eq: userId } } },
@@ -160,14 +338,14 @@ const addToCommunity = async (req, res) => {
       },
       { new: true }
     )
-    .populate("users", "-password")
-    .populate("groupAdmin", "-password");
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
 
-    if(!added){
-        res.status(403).json({errmsg:"Failed to add new member"})
-      }else{
-        res.status(200).json({message:"Added new member"})
-      }
+    if (!added) {
+      res.status(403).json({ errmsg: "Failed to add new member" })
+    } else {
+      res.status(200).json({ message: "Added new member" })
+    }
   } catch (err) {
     console.error("addToCommunity", err);
   }
@@ -175,35 +353,45 @@ const addToCommunity = async (req, res) => {
 
 //.............................................ADMIN REMOVE MEMBER FROM GROUP.......................................................
 
-const removeFromCommunity = async (req,res)=>{
-    try{
+const removeFromCommunity = async (req, res) => {
+  try {
 
-        const { chatId, userId } = req.body;
-        const removed = await chatModel.findByIdAndUpdate(
-          { chatId },
-          {
-            $pull: { users: userId },
-          },
-          { new: true }
-        )
-        .populate("users", "-password")
-        .populate("groupAdmin", "-password");
-    
-        if(!removed){
-            res.status(403).json({errmsg:"Failed to remove member"})
-          }else{
-            res.status(200).json({message:"removed Successfully"})
-          }
-    }catch (err){
-        console.error('removeFromCommunity',err)
+    const { chatId, userId } = req.body;
+    const removed = await chatModel.findByIdAndUpdate(
+      { chatId },
+      {
+        $pull: { users: userId },
+      },
+      { new: true }
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
+
+    if (!removed) {
+      res.status(403).json({ errmsg: "Failed to remove member" })
+    } else {
+      res.status(200).json({ message: "removed Successfully" })
     }
+  } catch (err) {
+    console.error('removeFromCommunity', err)
+  }
 }
 
 
 
 
 module.exports = {
+  updateUserinfo,
   userInfo,
+  connectMembers,
+  createChat,
+  chatList,
+  accessMessage,
+  acceptReq,
+  addMessage,
+
+
+
   allUsers,
   accessChat,
   fetchChats,

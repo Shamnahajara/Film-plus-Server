@@ -141,6 +141,7 @@ const addToFavorite = async (req, res) => {
     try {
         const movieId = req.params.movieId; 
         const reviews = await ReviewModel.find({ movieId: movieId }).populate('userId').populate('movieId');
+        console.log("reviews",reviews)
         if (reviews) {
             return res.status(200).json({ reviews });
         }

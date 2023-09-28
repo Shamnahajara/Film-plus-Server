@@ -40,7 +40,16 @@ router.get('/getmovies',movieController.getMovies);
 router.get('/providerlist/:providerId',auth.verifyUserToken,productController.productOnRental);
 router.patch('/returned/:rentalId',auth.verifyUserToken,productController.returned);
 router.post('/rentonduemail',auth.verifyUserToken,productController.rentReturnMail);
+router.patch('/updateinterest/:userId',auth.verifyUserToken,communityController.updateUserinfo);
 router.get('/userInfo/:userId',auth.verifyUserToken,communityController.userInfo);
+router.get('/connectmembers/:userId',auth.verifyUserToken,communityController.connectMembers);
+router.post('/createchat/:recieverId',auth.verifyUserToken,communityController.createChat);
+router.patch('/acceptreq/:chatId',auth.verifyUserToken,communityController.acceptReq);
+router.get('/chatlist/:userId',auth.verifyUserToken,communityController.chatList);
+router.post('/addmessagecommunity',auth.verifyUserToken,communityController.addMessage)
+router.get('/accessmessage/:recieverId',auth.verifyUserToken,communityController.accessMessage);
+
+
 router.get('/allusers/:userId',auth.verifyUserToken,communityController.allUsers)
 router.post('/oneOnOne/:userId',auth.verifyUserToken,communityController.accessChat);
 router.get('/fetchChats/:userId',auth.verifyUserToken,communityController.fetchChats);
@@ -48,6 +57,8 @@ router.post('/addcommunity/:userId',auth.verifyUserToken,communityController.cre
 router.patch('/editcommunity',auth.verifyUserToken,communityController.editCommunity);
 router.patch('/addtogroup',auth.verifyUserToken,communityController.addToCommunity);
 router.patch('/removefromcommunity',auth.verifyUserToken,communityController.removeFromCommunity);
+
+
 router.get('/providerInfo/:providerId',auth.verifyUserToken,providerController.providerInfo);
 router.get('/providerChat/:providerId',auth.verifyUserToken,providerController.accessChat);
 router.get('/chatslist/:userId',auth.verifyUserToken,providerController.fetchChats);

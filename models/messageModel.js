@@ -14,7 +14,7 @@ const messageSchema = mongoose.Schema({
         type:mongoose.Schema.Types.ObjectId,
         ref:"ChatProvider"
     },
-    chat: {
+    communityChat: {
         type:mongoose.Schema.Types.ObjectId,
         ref:"Chat"
     },

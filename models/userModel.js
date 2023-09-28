@@ -31,13 +31,19 @@ const userSchema = mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Movies",
       }],
-    bioDescription: {
-        type: String,
-    },
-    likedGenres: [{
+    favoriteGenre: {
         type: String
-    }],
-
+    },
+    workingAs: {
+        type: String
+    },
+    preferredLanguage: {
+        type: String
+    },
+    communitymember:{
+        type:Boolean,
+        default:false
+    }
 },
 {
     timestamps:true
