@@ -22,6 +22,8 @@ router.get('/getfavorites/:userId',auth.verifyUserToken,movieController.getFavor
 router.patch('/deleteFavorites',auth.verifyUserToken,movieController.deleteFavorite);
 router.post('/addReview',auth.verifyUserToken,movieController.addReview);
 router.get('/getReviews/:movieId',auth.verifyUserToken,movieController.getReviews);
+router.patch('/editreview/:reviewId',auth.verifyUserToken,movieController.editReview);
+router.delete()
 router.put('/addproduct',auth.verifyUserToken,productController.addProduct);
 router.get('/getproducts',auth.verifyUserToken,productController.getProducts);
 router.get('/product/:id', auth.verifyUserToken, productController.product);
@@ -46,17 +48,21 @@ router.get('/connectmembers/:userId',auth.verifyUserToken,communityController.co
 router.post('/createchat/:recieverId',auth.verifyUserToken,communityController.createChat);
 router.patch('/acceptreq/:chatId',auth.verifyUserToken,communityController.acceptReq);
 router.get('/chatlist/:userId',auth.verifyUserToken,communityController.chatList);
-router.post('/addmessagecommunity',auth.verifyUserToken,communityController.addMessage)
+router.post('/addmessagecommunity',auth.verifyUserToken,communityController.addMessage);
 router.get('/accessmessage/:recieverId',auth.verifyUserToken,communityController.accessMessage);
+router.post('/createcommunity',auth.verifyUserToken,communityController.CreateCommunity);
+router.get('/communitylist',auth.verifyUserToken,communityController.communitylist);
+router.patch('/jointocommunity/:chatId',auth.verifyUserToken,communityController.joinToCommunity);
+router.get('/accesscommunitymsg/:chatId',auth.generateToken,communityController.accessGroupMsg);
 
 
-router.get('/allusers/:userId',auth.verifyUserToken,communityController.allUsers)
-router.post('/oneOnOne/:userId',auth.verifyUserToken,communityController.accessChat);
-router.get('/fetchChats/:userId',auth.verifyUserToken,communityController.fetchChats);
-router.post('/addcommunity/:userId',auth.verifyUserToken,communityController.createCommunity);
-router.patch('/editcommunity',auth.verifyUserToken,communityController.editCommunity);
-router.patch('/addtogroup',auth.verifyUserToken,communityController.addToCommunity);
-router.patch('/removefromcommunity',auth.verifyUserToken,communityController.removeFromCommunity);
+// router.get('/allusers/:userId',auth.verifyUserToken,communityController.allUsers)
+// router.post('/oneOnOne/:userId',auth.verifyUserToken,communityController.accessChat);
+// router.get('/fetchChats/:userId',auth.verifyUserToken,communityController.fetchChats);
+// router.post('/addcommunity/:userId',auth.verifyUserToken,communityController.createCommunity);
+// router.patch('/editcommunity',auth.verifyUserToken,communityController.editCommunity);
+// router.patch('/addtogroup',auth.verifyUserToken,communityController.addToCommunity);
+// router.patch('/removefromcommunity',auth.verifyUserToken,communityController.removeFromCommunity);
 
 
 router.get('/providerInfo/:providerId',auth.verifyUserToken,providerController.providerInfo);

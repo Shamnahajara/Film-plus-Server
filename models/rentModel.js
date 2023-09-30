@@ -31,6 +31,9 @@ const rentSchema = mongoose.Schema({
         type:Boolean,
         default:false
     },
+    idProof : {
+      type:String,
+    },
     bookedAt:{
         type:Date
     }

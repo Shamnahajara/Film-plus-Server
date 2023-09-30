@@ -1,4 +1,5 @@
 const MovieModel = require('../../models/movieModel');
+const reviewModel = require('../../models/reviewModel');
 const ReviewModel = require('../../models/reviewModel');
 const UserModel = require('../../models/userModel');
 const mongoose = require('mongoose');
@@ -150,7 +151,44 @@ const addToFavorite = async (req, res) => {
         res.status(500).json({ errmsg: 'Internal Server Error' });
     }
   };
-  
+
+// ............................................EDIT-REVIEW- THE USER UPLOADED..........................................
+  const editReview = async(req,res)=>{
+    try{
+      const {reviewId} = req.params
+      const {editRate,editReview} = req.body
+      const review = await ReviewModel.findByIdAndUpdate( reviewId,{$set:{
+        review : editReview,
+        rating : editRate
+      }},{new:true})
+
+      if(review){
+        res.status(200).json({message:"Review edited successfully"})
+      }else{
+        res.status(403).json({err:"Failed to update review"}) 
+      }
+    }catch (err){
+      res.status(500).json({errmsg:"Failed to update review"})
+      console.error("editReview",err)
+    }
+  }
+
+// ...............................................DELETE-REVIEW.............................................................
+const deleteReview = async(req,res)=>{
+  try{
+    const {reviewId} = req.params
+    const review = await reviewModel.ffindByIdAndDelete(reviewId)
+
+    if(review){
+      res.status(200).json({message:"Review deleted successfully"})
+    }else{
+      res.status(403).json({err:"Failed to delete review try again.."}) 
+    }
+
+  }catch (err){
+     res.status(500).json({errmsg:"Failed to delete review try again.."})
+  }
+}
 
 //...............................................AVERAGE RATING OF A MOVIE.................................................
 
@@ -201,6 +239,7 @@ module.exports = {
      singleMovie,
      addReview,
      getReviews,
+     editReview,
      addToFavorite,
      deleteFavorite,
      getFavoriteMovies,

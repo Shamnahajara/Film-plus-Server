@@ -13,6 +13,7 @@ const createCheckoute = async (req, res) => {
     const fromDate = req.body.rentFrom
     const toDate = req.body.rentTo
     const location = req.body.location
+    const idProof = req.body.idProof
     const Product = await ProductModel.findOne({_id:req.body.productId})
     
     const diff = new Date(toDate) - new Date(fromDate)
@@ -70,7 +71,7 @@ if (existingBooking) {
           },
         ],
         mode: 'payment',
-        success_url: `${BACKEND_URL}/user/paymentSuccess?userId=${UserId}&productId=${Product._id}&amount=${amount}&fromDate=${fromDate}&toDate=${toDate}&location=${location}`,
+        success_url: `${BACKEND_URL}/user/paymentSuccess?userId=${UserId}&productId=${Product._id}&amount=${amount}&fromDate=${fromDate}&toDate=${toDate}&location=${location}&idProof=${idProof}`,
         cancel_url: `${BACKEND_URL}/paymentFail`,
       })
 
@@ -85,7 +86,7 @@ if (existingBooking) {
 // ..................................PAYMENT-SUCCESS..........................................
 const paymentSuccess = async (req, res) => {
     try {
-        const { productId, fromDate, toDate, amount, userId,location } = req.query
+        const { productId, fromDate, toDate, amount, userId,location,idProof } = req.query
         const load = true
         await RentModel.create({
             userId: userId,
@@ -93,6 +94,7 @@ const paymentSuccess = async (req, res) => {
             fromDate: fromDate,
             toDate: toDate,
             amount: amount,
+            idProof:idProof,
             bookedAt: new Date(),
             deliveryLocation: location
         })

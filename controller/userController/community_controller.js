@@ -1,6 +1,8 @@
 const communityChatModel = require('../../models/communityChatModel')
 const userModel = require("../../models/userModel");
 const MessageModel = require('../../models/messageModel')
+const mongoose = require('mongoose');
+const CircularJSON = require('circular-json');
 
 
 // ......................................UPDATING USER-INFO FOR GIVING SUGGESION ............................................
@@ -127,7 +129,7 @@ const acceptReq = async (req, res) => {
 const chatList = async (req, res) => {
   try {
     const { userId } = req.params;
-    const results = await communityChatModel.find({ users: { $elemMatch: { $eq: userId } } })
+    const results = await communityChatModel.find({$and :[ {isGroupChat:false},{ users: { $elemMatch: { $eq: userId } } }]})
       .populate("users", "-password")
       .sort({ updatedAt: -1 })
     res.status(200).json({ results: results });
@@ -142,8 +144,7 @@ const accessMessage = async (req, res) => {
   try {
     const userId = req.payload.id
     const { recieverId } = req.params
-
-    const reciever = await userModel.findById(recieverId)
+    const reciever = await userModel.findOne({ _id: recieverId });
     const existingChat = await communityChatModel.findOne({
       users: { $all: [userId, recieverId] },
     });
@@ -152,7 +153,6 @@ const accessMessage = async (req, res) => {
       const messages = await MessageModel.find({
         communityChat: existingChat._id,
       });
-      console.log(messages)
       return res.status(200).json({ messages, reciever, chatId: existingChat });
     }
 
@@ -164,7 +164,8 @@ const accessMessage = async (req, res) => {
 // ..........................................ADD-MESSAGE-ONE-TO-ONE.........................................................................
 const addMessage = async (req, res) => {
   try {
-    const { userId, message, chatId } = req.body;
+    const userId = req.payload.id
+    const { message, chatId } = req.body;
     const newMessage = await MessageModel.create({
       sender: userId,
       message,
@@ -181,6 +182,123 @@ const addMessage = async (req, res) => {
   }
 };
 
+//..............................................CREATE-COMMUNITY-BY-SESSION-USER.....................................................................
+const CreateCommunity = async (req, res) => {
+  try {
+    const userId = req.payload.id
+    const { name, description, communitypro } = req.body
+
+    const existed = await communityChatModel.findOne({ groupAdmin: userId });
+    if (existed) {
+      console.log(existed)
+      res.status(200).json({ errMsg: " You already made a community " })
+    } else {
+      const community = await communityChatModel.create({
+        chatName: name,
+        isGroupchat: true,
+        users: [userId],
+        groupAdmin: userId,
+        groupProfile: communitypro,
+        aboutGroup: description
+      }, { new: true });
+      if (community) {
+        res.status(200).json({ message: "Your community has been created " })
+      } else {
+        res.status(403).json({ errMsg: "Failed to create community try later" })
+      }
+    }
+
+  } catch (err) {
+    console.error("createCommunity:", err)
+  }
+}
+
+//.................................................LIST-COMMUNITY-CHAT................................................
+const communitylist = async (req, res) => {
+  try {
+    const userId = req.payload.id
+    const communityList = await communityChatModel.find({
+
+      isGroupchat: { $eq: true },
+      groupAdmin: { $ne: userId },
+      users: { $nin: [userId] },
+    })
+
+    if (communityList) {
+      res.status(200).json({ communityList: communityList })
+    }
+
+  } catch (err) {
+    console.error("communityListig", err)
+  }
+}
+
+//.......................................USER-JOIN-TO-A-COMMUNITY.................................................................
+const joinToCommunity = async (req, res) => {
+  try {
+    const userId = req.payload.id;
+    const { chatId } = req.params
+    const added = await communityChatModel.findByIdAndUpdate(
+      new mongoose.Types.ObjectId(chatId),
+      {
+        $push: { users: userId },
+      },
+      { new: true }
+    )
+      .populate("users", "-password")
+      .populate("groupAdmin", "-password");
+
+    if (!added) {
+      res.status(403).json({ errmsg: "Failed to add new member" })
+    } else {
+      res.status(200).json({ message: "Added new member" })
+    }
+  } catch (err) {
+    console.error("joinToCommunity", err);
+  }
+};
+
+
+// .................................ADD-MESSAGE-TO-GROUP-CHAT............................................................
+const addCommunityMsg = async (req, res) => {
+  try {
+    const userId = req.payload.id
+    const { message, chatId } = req.body;
+    const newMessage = await MessageModel.create({
+      sender: userId,
+      message,
+      communityChat: chatId
+    });
+    console.log(newMessage)
+    if (newMessage) {
+      res.status(200).json({ msg: newMessage, message: "message " });
+    } else {
+      res.status(403).json({ errmsg: "not ready" });
+    }
+
+  } catch (err) {
+    console.error("addCommunityMsg", err)
+  }
+}
+// ..................................ACCESSING-GROUP-CHAT-MESSAGE ........................................................
+const accessGroupMsg = async (req, res) => {
+  try {
+    const chatId = req.params
+
+    const existing = await communityChatModel.findOne({ _id: chatId }, { isGroupChat: true });
+
+    if (existing) {
+      const messages = await MessageModel.find({
+        communityChat: existing._id,
+      })
+      res.status(200).json({ messages : CircularJSON.stringify(messages) })
+    }
+
+
+  } catch (err) {
+    console.error("accessGroupmsg", err)
+  }
+}
 
 
 
@@ -203,12 +321,6 @@ const allUsers = async (req, res) => {
     console.error("allUsers : ", err);
   }
 };
-
-
-
-
-
-
 
 // ..........................................ACCESS-Messages-OF-ONE-TO-ONE.............................................................
 const accessChat = async (req, res) => {
@@ -389,6 +501,11 @@ module.exports = {
   accessMessage,
   acceptReq,
   addMessage,
+  CreateCommunity,
+  communitylist,
+  joinToCommunity,
+  addCommunityMsg,
+  accessGroupMsg,
 
 
 

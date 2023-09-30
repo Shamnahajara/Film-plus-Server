@@ -23,6 +23,10 @@ const chatModel = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
         },
+        groupProfile : {
+            type: String,
+            default :"https://www.tenniscall.com/images/chat.jpg"
+        },
         requested: {
             requestId: {
                 type: mongoose.Schema.Types.ObjectId,
@@ -32,6 +36,10 @@ const chatModel = mongoose.Schema(
                 type: Boolean,
                 default: false
             }
+        },
+        aboutGroup:{
+            type:String,
+            default:"Give description about your community "
         }
     },
     {

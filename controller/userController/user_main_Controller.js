@@ -1,16 +1,15 @@
-const userModel = require("../../models/userModel");
-const reviewModel = require('../../models/reviewModel')
 const sha256 = require("js-sha256");
-const {generateToken} = require('../../middleware/auth') 
-const SALT = process.env.SALT;
 const nodemailer = require("nodemailer");
-const FRONTENDURL =process.env.FRONTEND_URL;
-const RentModel = require('../../models/rentModel')
-const ProductModel = require('../../models/productModel')
-const EMAIL_PASS = process.env.EMAIL_PASS
+const SALT = process.env.SALT;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const FRONTENDURL = process.env.FRONTEND_URL;
+const RentModel = require('../../models/rentModel');
+const userModel = require("../../models/userModel");
+const { generateToken } = require('../../middleware/auth');
 
 
-// ...................................VERIFY-EMAIL.........................................\\
+
+//..............................................VERIFY-EMAIL...........................................................\\
 
 const sendVerifyMail = async (email, name, userId) => {
   try {
@@ -43,11 +42,10 @@ const sendVerifyMail = async (email, name, userId) => {
   }
 };
 
-// .......................................verify-mail..........................................
+// ..............................................VERIFY-EMAIL.................................................................
 
 const verifyMail = async (req, res) => {
   try {
-    console.log("here i am");
     const { userId } = req.params;
     await userModel.updateOne({ _id: userId }, { $set: { isVerified: true } });
     res.status(200).json({ message: "Email verified successfully" });
@@ -57,7 +55,7 @@ const verifyMail = async (req, res) => {
   }
 };
 
-// ..................................... REGISTER...........................................\\
+// .................................................. REGISTER......................................................................\\
 
 const register = async (req, res) => {
   try {
@@ -88,7 +86,7 @@ const register = async (req, res) => {
   }
 };
 
-//.. ........................................USER-LOGIN..................................................\\
+//.. ...........................................USER-LOGIN................................................................\\
 
 const login = async (req, res) => {
   try {
@@ -106,13 +104,13 @@ const login = async (req, res) => {
       res.status(401).json({ errmsg: "Verify your mail" });
     } else {
       const token = generateToken(user._id, "user");
-      res.status(200) .json({
-          message: "user successfully login",
-          name: user.name,
-          token,
-          userId: user._id,
-          role: "user",
-        });
+      res.status(200).json({
+        message: "user successfully login",
+        name: user.name,
+        token,
+        userId: user._id,
+        role: "user",
+      });
     }
   } catch (error) {
     res.status(500).json({ errmsg: "server error" });
@@ -120,76 +118,76 @@ const login = async (req, res) => {
   }
 };
 
-// .....................................SEND-FORGOT-MAIL................................................\\
+// ..............................................SEND-FORGOT-MAIL........................................................\\
 
-const forgotPasswordMail = async (email,name,userId)=>{
-try{
+const forgotPasswordMail = async (email, name, userId) => {
+  try {
     const transporter = nodemailer.createTransport({
-        host:'smtp.gmail.com',
-        port:465,
-        secure:true,
-        auth:{
-            user:'filmpluswebsite@gmail.com',
-            pass:EMAIL_PASS
-        },
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true,
+      auth: {
+        user: 'filmpluswebsite@gmail.com',
+        pass: EMAIL_PASS
+      },
 
     });
 
-    const mailOptions={
-        from:'filmpluswebsite@gmail.com',
-        to:email,
-        subject:'Forgot Password',
-        html:`<p>Hello ${name} Please click here <a href = "${FRONTENDURL}/resetPassword/${userId}">here</a>if you want't to reset your password</p>`
+    const mailOptions = {
+      from: 'filmpluswebsite@gmail.com',
+      to: email,
+      subject: 'Forgot Password',
+      html: `<p>Hello ${name} Please click here <a href = "${FRONTENDURL}/resetPassword/${userId}">here</a>if you want't to reset your password</p>`
     };
 
-    transporter.sendMail(mailOptions, (error,info)=>{
-        if(error){
-            console.log('email could not be sent',error.message);
-        }else{
-            console.log('email has been sent', info.response);
-        }
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.log('email could not be sent', error.message);
+      } else {
+        console.log('email has been sent', info.response);
+      }
     })
 
-}catch (error){
-console.log(error);
-console.log('error occured while sending mail')
+  } catch (error) {
+    console.log(error);
+    console.log('error occured while sending mail')
+  }
 }
-}
 
-// ...................................FORGOT-PASSWORD.....................................................\\
+// ..............................................FORGOT-PASSWORD.......................................................\\
 
-const forgotPassword = async (req,res)=>{
-    try{
-        const {email} = req.body
-        const user = await userModel.findOne({email})
-        if(user){
-            forgotPasswordMail(email,user.name,user._id)
-            res.status(200).json({message:'Please check your mail'})
-        }else{
-            res.status(400).json({errmsg:'user not found'})
-        }
-        
-    }catch (error){
-        res.status(500).json({errmsg:'Server error'})
-
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body
+    const user = await userModel.findOne({ email })
+    if (user) {
+      forgotPasswordMail(email, user.name, user._id)
+      res.status(200).json({ message: 'Please check your mail' })
+    } else {
+      res.status(400).json({ errmsg: 'user not found' })
     }
+
+  } catch (error) {
+    res.status(500).json({ errmsg: 'Server error' })
+
+  }
 }
 
-// ................................RESET-PASSSWORD..................................................\\
+// ..........................................RESET-PASSSWORD............................................................\\
 
-const restPassword = async (req,res)=>{
-    try{
-        const {userId,password} = req.body
-        await userModel.updateOne({ _id: userId},{ $set:{ password: sha256(password + SALT)}})
-        res.status(200).json({message:'Password Changed'})
-    }catch (error){
-        res.status(500).json({errmsg:"Server error"})
-    }
+const restPassword = async (req, res) => {
+  try {
+    const { userId, password } = req.body
+    await userModel.updateOne({ _id: userId }, { $set: { password: sha256(password + SALT) } })
+    res.status(200).json({ message: 'Password Changed' })
+  } catch (error) {
+    res.status(500).json({ errmsg: "Server error" })
+  }
 }
 
 
 
-// ....................................GOOGLE-LOGIN...............................................\\
+// .................................................GOOGLE-LOGIN............................................................\\
 
 const googleLogin = async (req, res) => {
   try {
@@ -207,62 +205,62 @@ const googleLogin = async (req, res) => {
       });
       const token = generateToken(newUser._id, "user");
       res.status(200).json({
-          message: "User login successfully",
-          name: newUser.name,
-          userId: newUser._id,
-          token,
-          role: "user",
-        });
+        message: "User login successfully",
+        name: newUser.name,
+        userId: newUser._id,
+        token,
+        role: "user",
+      });
     } else if (user.isBlocked) {
       res.status(403).json({ errmsg: "user is blocked by admin" });
     } else {
-        if (!user.isVerified) {
-          if (!user.profileImage) {
-            await userModel.updateOne({ email }, { $set: { profileImage, isVerified: true } } );
-          } else {
-            await userModel.updateOne( { _id: user._id },{ $set: { isVerified: true } });
-          }
-          const token = generateToken(user._id, "user");
-          res.status(200).json({
-              message: "user login successfully",
-              name: user.name,
-              token,
-              userId: user._id,
-              role: "user",
-            });
+      if (!user.isVerified) {
+        if (!user.profileImage) {
+          await userModel.updateOne({ email }, { $set: { profileImage, isVerified: true } });
         } else {
-          if (!user.profileImage) {
-            await userModel.updateOne({ email }, { $set: { profileImage } });
-          }
-          const token = generateToken(user._id, "user");
-          res.status(200).json({
-              message: "user login successfully",
-              name: user.name,
-              token,
-              userId: user._id,
-              role: "user",
-            });
+          await userModel.updateOne({ _id: user._id }, { $set: { isVerified: true } });
         }
-      
+        const token = generateToken(user._id, "user");
+        res.status(200).json({
+          message: "user login successfully",
+          name: user.name,
+          token,
+          userId: user._id,
+          role: "user",
+        });
+      } else {
+        if (!user.profileImage) {
+          await userModel.updateOne({ email }, { $set: { profileImage } });
+        }
+        const token = generateToken(user._id, "user");
+        res.status(200).json({
+          message: "user login successfully",
+          name: user.name,
+          token,
+          userId: user._id,
+          role: "user",
+        });
+      }
+
     }
-  } catch (err) {}
+  } catch (err) { }
 };
 
 
 // ..................................................LOAD-PROFILE...........................................................\\
 
-const loadProfile = async (req,res)=>{
-  try{
-    const userId = req.payload.id 
-    const user = await userModel.findOne({_id:userId})
-    return res.status(200).json({user})
-  }catch (err){
-    return res.status(500).json({errmsg:"Server error"})
+const loadProfile = async (req, res) => {
+  try {
+    const userId = req.payload.id
+    const user = await userModel.findOne({ _id: userId })
+    return res.status(200).json({ user })
+  } catch (err) {
+    return res.status(500).json({ errmsg: "Server error" })
   }
 }
 
 
-// ................................................EDIT-PROFILE-UPDATE............................................\\\
+// ............................................EDIT-PROFILE-UPDATE....................................................\\\
 
 const editProfile = async (req, res) => {
   try {
@@ -276,11 +274,11 @@ const editProfile = async (req, res) => {
 };
 
 
-// ..................................RENT-HISTORY...........................................\\\
+// .................................................RENT-HISTORY.....................................................\\\
 
 const rentHistory = async (req, res) => {
   try {
-    const userId = req.params.userId; 
+    const userId = req.params.userId;
     console.log(userId + "user is");
 
     const rentedProducts = await RentModel.find({ userId: userId }).populate('productId');
@@ -293,21 +291,22 @@ const rentHistory = async (req, res) => {
     console.error('rentHistory:', err);
   }
 }
+
+
 // /.....................................CHANGE PASSWORD FROM PROFILE...................................................
-const changePassword = async (req,res)=>{
-  try{
-    const {userId} = req.params
-    const {email,rePass,newPass} = req.body
-    const user = await userModel.find({$and:[{_id:userId},{email:email}]});
+const changePassword = async (req, res) => {
+  try {
+    const { userId } = req.params
+    const { email, rePass, newPass } = req.body
+    const user = await userModel.find({ $and: [{ _id: userId }, { email: email }] });
 
-    if(user){
-      await userModel.updateOne({ _id: userId},{ $set:{ password: sha256(newPass + SALT)}})
-      res.status(200).json({message:"Password Changed Successfully"});
+    if (user) {
+      const hashedPassword = sha256(String(newPass) + String(SALT));
+      await userModel.updateOne({ _id: userId }, { $set: { password: hashedPassword } });
+      res.status(200).json({ message: "Password Changed Successfully" });
     }
-    
-
-  }catch (err){
-     console.error("changepassword:",err)
+  } catch (err) {
+    console.error("changepassword:", err)
   }
 }
 
