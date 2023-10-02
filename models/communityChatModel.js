@@ -23,9 +23,9 @@ const chatModel = mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "User"
         },
-        groupProfile : {
+        groupProfile: {
             type: String,
-            default :"https://www.tenniscall.com/images/chat.jpg"
+            default: "https://www.tenniscall.com/images/chat.jpg"
         },
         requested: {
             requestId: {
@@ -37,9 +37,13 @@ const chatModel = mongoose.Schema(
                 default: false
             }
         },
-        aboutGroup:{
-            type:String,
-            default:"Give description about your community "
+        aboutGroup: {
+            type: String,
+            default: "Give description about your community "
+        },
+        isBlocked: {
+            type: Boolean,
+            default: false
         }
     },
     {

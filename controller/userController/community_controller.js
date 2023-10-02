@@ -129,15 +129,35 @@ const acceptReq = async (req, res) => {
 const chatList = async (req, res) => {
   try {
     const { userId } = req.params;
-    const results = await communityChatModel.find({$and :[ {isGroupChat:false},{ users: { $elemMatch: { $eq: userId } } }]})
+    const query = {
+      $and: [
+        { users: { $elemMatch: { $eq: userId } } }
+      ]
+    };
+
+    const results = await communityChatModel.find(query)
       .populate("users", "-password")
-      .sort({ updatedAt: -1 })
-    res.status(200).json({ results: results });
+      .sort({ updatedAt: -1 });
+
+    const groupChats = [];
+    const oneOnOneChats = [];
+
+    results.forEach(chat => {
+      if (chat.isGroupchat) {
+        groupChats.push(chat);
+      } else {
+        oneOnOneChats.push(chat);
+      }
+    });
+
+    res.status(200).json({ groupChats, oneOnOneChats });
 
   } catch (err) {
     console.error("fetchChats", err);
+    res.status(500).json({ error: "An error occurred while fetching chats." });
   }
 };
+
 
 // ..................................ACCESSING MESSAGES OF A SINGLE-CHAT................................................
 const accessMessage = async (req, res) => {
@@ -161,17 +181,31 @@ const accessMessage = async (req, res) => {
   }
 }
 
+//..........................................POPULATING-COMMUNITY-MESSAGE...............................................
+const accessCommunityMsg = async (req,res)=>{
+  try{
+    const {chatId} = req.params
+    const messages = await MessageModel.find({communityChat:chatId}).populate('sender','-password')
+    console.log("messages",messages)
+    res.status(200).json({messages:messages});
+
+  }catch (err){
+    console.err("AccessCommunityMsg" , err)
+  }
+}
+
 // ..........................................ADD-MESSAGE-ONE-TO-ONE.........................................................................
 const addMessage = async (req, res) => {
   try {
     const userId = req.payload.id
     const { message, chatId } = req.body;
+    console.log("chatId",chatId)
     const newMessage = await MessageModel.create({
       sender: userId,
       message,
       communityChat: chatId
     });
-    console.log(newMessage)
+    console.log("newMessage",newMessage)
     if (newMessage) {
       res.status(200).json({ msg: newMessage, message: "message " });
     } else {
@@ -506,6 +540,7 @@ module.exports = {
   joinToCommunity,
   addCommunityMsg,
   accessGroupMsg,
+  accessCommunityMsg,
 
 
 

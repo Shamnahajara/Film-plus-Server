@@ -177,16 +177,30 @@ const addToFavorite = async (req, res) => {
 const deleteReview = async(req,res)=>{
   try{
     const {reviewId} = req.params
-    const review = await reviewModel.ffindByIdAndDelete(reviewId)
+    const review = await reviewModel.findByIdAndDelete(reviewId);
 
     if(review){
       res.status(200).json({message:"Review deleted successfully"})
-    }else{
-      res.status(403).json({err:"Failed to delete review try again.."}) 
     }
 
   }catch (err){
      res.status(500).json({errmsg:"Failed to delete review try again.."})
+     console.error("deleteReview",err)
+  }
+}
+
+//.............................................LISTING-ALL-REVIEWS-OF-SESSION-USER..........................................................
+const  listUserReviews = async(req,res)=>{
+  try{
+     const userId = req.payload.id
+     const reviews = await reviewModel.find({userId:userId})
+     .populate('userId')
+     .populate('movieId')
+
+     res.status(200).json({reviews:reviews});
+
+  }catch (err){
+    console.error("listUserReviews",err)
   }
 }
 
@@ -240,6 +254,8 @@ module.exports = {
      addReview,
      getReviews,
      editReview,
+     deleteReview,
+     listUserReviews,
      addToFavorite,
      deleteFavorite,
      getFavoriteMovies,
