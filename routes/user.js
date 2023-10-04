@@ -44,7 +44,7 @@ router.get('/providerlist/:providerId', auth.verifyUserToken, productController.
 router.patch('/returned/:rentalId', auth.verifyUserToken, productController.returned);
 router.post('/rentonduemail', auth.verifyUserToken, productController.rentReturnMail);
 router.patch('/updateinterest/:userId', auth.verifyUserToken, communityController.updateUserinfo);
-router.get('/userInfo/:userId', auth.verifyUserToken, communityController.userInfo);
+router.get('/userInfo', auth.verifyUserToken, communityController.userInfo);
 router.get('/connectmembers/:userId', auth.verifyUserToken, communityController.connectMembers);
 router.post('/createchat/:recieverId', auth.verifyUserToken, communityController.createChat);
 router.patch('/acceptreq/:chatId', auth.verifyUserToken, communityController.acceptReq);

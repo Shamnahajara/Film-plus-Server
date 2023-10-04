@@ -17,6 +17,7 @@ const fetchChats = async (req, res) => {
     const { userId } = req.params;
     const results = await ProviderChatModel.find({ users: { $elemMatch: { $eq: userId } } })
       .populate("users", "-password")
+      .populate("latestMessage")
       .sort({ updatedAt: -1 })
     res.status(200).json({ results: results });
 
@@ -45,7 +46,7 @@ const accessChat = async (req, res) => {
       const otherUser = await userModel.findById(otherUserId);
       const messages = await MessageModel.find({
         providerChat: existingChat._id,
-      });
+      }).populate("sender", "-password");
       return res.status(200).json({ messages, chatId: existingChat._id, otherUser });
     }
 
@@ -75,6 +76,7 @@ const addMessage = async (req, res) => {
       providerChat: chatId
     });
     if (newMessage) {
+      await ProviderChatModel.findByIdAndUpdate(chatId, { $set: { latestmessage: newMessage._id } })
       res.status(200).json({ msg: newMessage, message: "message " });
     } else {
       res.status(403).json({ errmsg: "not ready" });
