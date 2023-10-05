@@ -1,5 +1,8 @@
 const adminModel = require('../../models/adminModel')
-const {generateToken} = require('../../middleware/auth')
+const UserModel = require('../../models/userModel');
+const MovieModel = require('../../models/movieModel');
+const ProductModel = require('../../models/productModel')
+const {generateToken} = require('../../middleware/auth');
 
 
 // .................................ADMIN-LOGIN.....................
@@ -21,6 +24,33 @@ const adminLogin = async (req,res)=>{
 }
 
 
+const cardData = async(req,res)=>{
+  try{
+    const usersCount = await UserModel.countDocuments();
+    const  movieCount = await MovieModel.countDocuments();
+    const  productCount = await ProductModel.countDocuments();
+
+    res.status(200).json({users:usersCount,movies:movieCount,products:productCount})
+
+  }catch (err){
+   console.error("cardData",cardData);
+  }
+}
+
+const latestMovies  = async(req,res)=>{
+  try{
+    const recent = await MovieModel.find({})
+    .sort({ _id: -1 })
+    .limit(5);
+    res.status(200).json({recentMovies:recent});
+  }catch (err){
+    console.error('latestMovies',err)
+  }
+}
+
+
 module.exports = {
-    adminLogin
+    adminLogin,
+    cardData,
+    latestMovies
 }

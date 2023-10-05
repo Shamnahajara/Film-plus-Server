@@ -36,6 +36,12 @@ const rentSchema = mongoose.Schema({
     },
     bookedAt:{
         type:Date
+    },
+    commissionAmount:{
+        type: Number,
+    },
+    providerAmount:{
+        type: Number
     }
 })
 

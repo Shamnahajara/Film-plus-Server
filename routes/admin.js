@@ -17,6 +17,7 @@ router.get('/movies', auth.verifyAdminToken, movieController.getMovies);
 router.patch('/unlistmovie/:movieId', auth.verifyAdminToken, movieController.unlistMovie);
 router.get('/communities', auth.verifyAdminToken, communityController.communities);
 router.patch('/communitystatus', auth.verifyAdminToken, communityController.communityStatus);
-
+router.get('/carddata', auth.verifyAdminToken, mainController.cardData);
+router.get('/recentmovies', auth.verifyAdminToken, mainController.latestMovies);
 
 module.exports = router

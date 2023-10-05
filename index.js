@@ -15,13 +15,13 @@ const BACKENDURL = process.env.BACKEND_URL
 const app = express();
 app.use(morgan("dev"));
 const corsOptions = {
-    origin: [BACKENDURL, FRONTENDURL],
+    origin: [BACKENDURL, FRONTENDURL, "https://www.filmplus.website", "https://filmplus.website"],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }
 
-app.use(cors());
 
+app.use(cors(corsOptions));
 app.use(express.json({ limit: '100mb', extended: true }));
 app.use(cookieParser())
 app.use('/user', userRoute);
@@ -35,7 +35,7 @@ const server = app.listen(PORT, () => {
 
 const io = require('socket.io')(server, {
     cors: {
-        origin: FRONTENDURL,
+        origin: "*",
         credentials: true
     }
 })

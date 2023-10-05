@@ -1,11 +1,11 @@
+require('dotenv').config()
 const RentModel = require('../../models/rentModel');
-const ProductModel =require('../../models/productModel');
+const ProductModel = require('../../models/productModel');
 const Stripe = require('stripe')
 const STRIPE_API_KEY = process.env.STRIPE_API_KEY
 const stripe = Stripe(STRIPE_API_KEY);
 const FRONTEND_URL = process.env.FRONTEND_URL
 const BACKEND_URL = process.env.BACKEND_URL
-
 // ................................CHECKOUT-AND-PAYMENT...................................
 const createCheckoute = async (req, res) => {
   try {
@@ -14,15 +14,15 @@ const createCheckoute = async (req, res) => {
     const toDate = req.body.rentTo
     const location = req.body.location
     const idProof = req.body.idProof
-    const Product = await ProductModel.findOne({_id:req.body.productId})
-    
+    const Product = await ProductModel.findOne({ _id: req.body.productId })
+
     const diff = new Date(toDate) - new Date(fromDate)
-    
-// .........Price increase no of days
+
+    // .........Price increase no of days
     const difference = diff / (1000 * 3600 * 24)
     const amount = Product.rentPrice * difference
 
-// ......checking product rented or not
+    // ......checking product rented or not
     const existingBooking = await RentModel.findOne({
       productId: Product._id,
       $or: [
@@ -34,11 +34,10 @@ const createCheckoute = async (req, res) => {
           fromDate: { $lte: toDate },
           toDate: { $gte: toDate }
         }
-    ]
-});
+      ]
+    });
 
-
-if (existingBooking) {
+    if (existingBooking) {
       res.status(409).json({ errMsg: 'This date is already booked.' });
       return;
     } else {
@@ -49,10 +48,10 @@ if (existingBooking) {
           fromDate: fromDate,
           toDate: toDate,
           amount: amount,
-          location:location
+          location: location
         }
       })
-
+      
       const session = await stripe.checkout.sessions.create({
         customer: user.id,
         line_items: [
@@ -71,11 +70,13 @@ if (existingBooking) {
           },
         ],
         mode: 'payment',
-        success_url: `${BACKEND_URL}/user/paymentSuccess?userId=${UserId}&productId=${Product._id}&amount=${amount}&fromDate=${fromDate}&toDate=${toDate}&location=${location}&idProof=${idProof}`,
+        success_url: `${BACKEND_URL}/user/paymentSuccess?userId=${UserId}&productId=${Product._id}&amount=${amount}&fromDate=${fromDate}&toDate=${toDate}&location=${location}`,
         cancel_url: `${BACKEND_URL}/paymentFail`,
+        
       })
-
+     
       res.send({ url: session.url });
+      console.log(session.url+'===')
     }
   } catch (error) {
     res.status(500).json({ errMsg: "Server Error" })
@@ -85,38 +86,46 @@ if (existingBooking) {
 
 // ..................................PAYMENT-SUCCESS..........................................
 const paymentSuccess = async (req, res) => {
-    try {
-        const { productId, fromDate, toDate, amount, userId,location,idProof } = req.query
-        const load = true
-        await RentModel.create({
-            userId: userId,
-            productId: productId,
-            fromDate: fromDate,
-            toDate: toDate,
-            amount: amount,
-            idProof:idProof,
-            bookedAt: new Date(),
-            deliveryLocation: location
-        })
+  try {
+    const { productId, fromDate, toDate, amount, userId, location } = req.query
+    const load = true
 
-        await ProductModel.updateOne({ _id:productId  }, { $set: { isRented: true } })
+    // Calculate the admin and provider amounts
+    // const adminAmount = (0.10 * amount);
+    // const providerAmount = amount - adminAmount;
 
-        res.redirect(`${FRONTEND_URL}/paymentSuccess/${load}`)
-    } catch (error) {
-        res.status(500).json({ errMsg: 'Server Error' })
-        console.log(error);
-    }
+    const rent = await RentModel.create({
+      userId: userId,
+      productId: productId,
+      fromDate: fromDate,
+      toDate: toDate,
+      amount: amount,
+      bookedAt: new Date(),
+      deliveryLocation: location
+    })
+    await ProductModel.updateOne({ _id: productId }, { $set: { isRented: true } })
+    // await RevenueModel.create({
+    //   rentId: rent._id,
+    //   amount: adminAmount,
+    //   date: rent.bookedAt
+    // })
+
+    res.redirect(`${FRONTEND_URL}/paymentSuccess/${load}`)
+  } catch (error) {
+    res.status(500).json({ errMsg: 'Server Error' })
+    console.log(error);
+  }
 }
 
 //  .....................................PAYMENT-FAIL........................................../
 
 const paymentFail = async (req, res) => {
-    try {
-        res.redirect(`${FRONTEND_URL}/paymentFail`)
-    } catch (error) {
-        res.status(500).json({ errMsg: 'Server Error' })
-        console.log(error);
-    }
+  try {
+    res.redirect(`${FRONTEND_URL}/paymentFail`)
+  } catch (error) {
+    res.status(500).json({ errMsg: 'Server Error' })
+    console.log(error);
+  }
 }
 
 
@@ -124,7 +133,7 @@ const paymentFail = async (req, res) => {
 
 
 module.exports = {
-    createCheckoute,
-    paymentSuccess,
-    paymentFail
+  createCheckoute,
+  paymentSuccess,
+  paymentFail
 }
